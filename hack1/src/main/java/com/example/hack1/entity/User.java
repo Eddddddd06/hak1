@@ -39,7 +39,7 @@ public class User implements UserDetails {
     private Role role;
 
     @Column(length = 50)
-    private String branch; // Obligatorio para BRANCH, null para CENTRAL
+    private String branch;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
