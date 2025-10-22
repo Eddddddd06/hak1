@@ -117,7 +117,7 @@ Cada usuario con `ROLE_BRANCH` debe tener una sucursal asignada al momento del r
 |--------|----------|-------------|-----------------|--------------|----------|
 | POST | `/sales` | Crear nueva venta | CENTRAL (cualquier branch), BRANCH (solo su branch) | Ver ejemplo abajo | 201: Venta creada |
 | GET | `/sales/{id}` | Obtener detalle de venta | CENTRAL (todas), BRANCH (solo de su branch) | - | 200: Detalle completo |
-| GET | `/sales` | Listar ventas con filtros | CENTRAL (todas), BRANCH (solo su branch) | Query params: `from`, `to`, `branch`, `page`, `size` | 200: Lista paginada |
+| GET | `/sales` | Listar ventas con filtros | CENTRAL (todas), BRANCH (solo de su branch) | Query params: `from`, `to`, `branch`, `page`, `size` | 200: Lista paginada |
 | PUT | `/sales/{id}` | Actualizar venta | CENTRAL (todas), BRANCH (solo de su branch) | Ver ejemplo abajo | 200: Venta actualizada |
 | DELETE | `/sales/{id}` | Eliminar venta | CENTRAL | - | 204: No Content |
 
@@ -319,7 +319,7 @@ Ya estás enviando resúmenes por email de manera asíncrona... ¿pero qué tal 
 ### Ejemplo de Email HTML (simplificado)
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <style>
         .header { background: #6B46C1; color: white; padding: 20px; }
@@ -336,7 +336,7 @@ Ya estás enviando resúmenes por email de manera asíncrona... ¿pero qué tal 
             <h3>Total Revenue</h3>
             <p>$4,800.50</p>
         </div>
-        <img src="https://quickchart.io/chart?c={type:'bar',data:{...}}" />
+        <img src="https://quickchart.io/chart?c={type:'bar',data:{...}}" alt="Gráfico de ventas" />
     </div>
 </body>
 </html>
@@ -485,3 +485,220 @@ Con mucho cariño desde California,
 
 **Gabriel Romero**
 ❤️
+
+---
+
+# Hackathon #1: Oreo Insight Factory — Resumen de entrega
+
+Este README contiene la información mínima requerida para entregar y validar el proyecto: datos del equipo, cómo ejecutar la aplicación, cómo ejecutar el Postman workflow, explicación de la implementación asíncrona y documentación del endpoint premium (si se intentó).
+
+---
+
+## 1) Información del equipo
+
+> Sustituir los siguientes placeholders por los nombres reales y códigos UTEC de cada integrante.
+
+- Abigail — UTEC: <codigo_abigail>
+- Eduardo — UTEC: <codigo_eduardo>
+- Zaleth — UTEC: <codigo_zaleth>
+
+> Nota: Reemplazar inmediatamente por la lista real antes de entregar.
+
+---
+
+## 2) Instrucciones para ejecutar el proyecto (local)
+
+Requisitos previos:
+- Java 21+
+- Maven 3.8+
+- Variables de entorno (ver sección siguiente)
+- (Opcional para emails) Cuenta SMTP y credenciales de app password
+
+Variables de entorno requeridas (ejemplo):
+
+```
+GITHUB_TOKEN=<tu_token_de_GitHub>
+GITHUB_MODELS_URL=<endpoint_REST_de_GitHub_Models>
+MODEL_ID=<id_del_modelo_del_Marketplace>
+JWT_SECRET=<clave_para_firmar_JWT>
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=<tu_email@gmail.com>
+MAIL_PASSWORD=<app_password>
+# Si usas PostgreSQL:
+DB_URL=<jdbc_url>
+DB_USER=<usuario_db>
+DB_PASS=<password_db>
+```
+
+Cómo compilar y ejecutar (línea de comandos, Windows CMD / PowerShell):
+
+1) Compilar y descargar dependencias:
+
+```bash
+mvn -U clean install -DskipTests
+```
+
+2) Ejecutar la aplicación desde Maven:
+
+```bash
+mvn spring-boot:run
+```
+
+O bien, generar el JAR y ejecutarlo:
+
+```bash
+mvn -U clean package -DskipTests
+java -jar target/hack1-0.0.1-SNAPSHOT.jar
+```
+
+3) Acceder a la API:
+- Base URL por defecto: http://localhost:8080
+- Endpoints principales:
+  - /auth/register
+  - /auth/login
+  - /sales
+  - /sales/summary/weekly
+  - /sales/summary/weekly/premium (si fue implementado)
+
+Consejos para desarrolladores:
+- Importar el proyecto como proyecto Maven en IntelliJ/Eclipse
+- Habilitar "Annotation Processing" si usas Lombok
+- Desactivar "Work offline" en Maven si tienes problemas de descarga
+
+---
+
+## 3) Instrucciones para correr el Postman workflow
+
+Se espera que exista una colección de Postman en el root del proyecto llamada `postman_collection.json` y, opcionalmente, un environment `postman_environment.json`.
+
+Pasos manuales en Postman GUI:
+1. Importar `postman_collection.json` y `postman_environment.json` en Postman.
+2. Ajustar variables del environment (ej.: baseUrl, JWT_SECRET local, emails de prueba).
+3. Usar Collection Runner o Postman Flows para ejecutar la secuencia.
+
+Ejemplo con Newman (línea de comandos):
+
+```powershell
+# Instalar newman si no lo tienes (Node.js requerido):
+npm install -g newman
+# Ejecutar colección
+newman run postman_collection.json -e postman_environment.json
+```
+
+Secuencia esperada (la colección ya debería incluir aserciones):
+1. Register CENTRAL → assert 201
+2. Login CENTRAL → assert 200, guardar token
+3. Register BRANCH → assert 201
+4. Login BRANCH → assert 200
+5. Crear ventas (varias) → assert 201
+6. Listar ventas con CENTRAL → assert 200 (todas)
+7. Listar ventas con BRANCH → assert 200 (solo su branch)
+8. Solicitar resumen asíncrono → assert 202 y requestId
+9. Intentar crear venta para otra sucursal con BRANCH → assert 403
+10. Eliminar venta con CENTRAL → assert 204
+
+Si la colección no está presente, crearla siguiendo los endpoints y ejemplos definidos en el enunciado del hackathon.
+
+---
+
+## 4) Explicación de la implementación asíncrona
+
+Resumen técnico del flujo asíncrono implementado en el proyecto:
+
+- Punto de entrada: el `Controller` que recibe la petición de generación de resumen (`/sales/summary/weekly` o la variante premium).
+- Respuesta inmediata: el controller publica un evento y retorna `202 Accepted` con un `requestId` y estado `PROCESSING`.
+- Evento: `ReportRequestedEvent` (clase de dominio) que encapsula parámetros de la petición (from, to, branch, emailTo, requestId, opciones premium).
+- Publicador de eventos: `ApplicationEventPublisher` utilizado por el `Controller` o por un Service para publicar `ReportRequestedEvent`.
+- Listener asíncrono: una clase con un método anotado `@EventListener` y `@Async` procesa el evento en background.
+  - Ejemplo:
+    - `@Async
+      @EventListener
+      public void handleReportRequest(ReportRequestedEvent event) { ... }`
+- En el listener se realizan los pasos:
+  1. Calcular agregados de ventas desde `SaleRepository` (totalUnits, totalRevenue, topSku, topBranch).
+  2. Construir prompt y llamar a GitHub Models API (HTTP client con `GITHUB_TOKEN` y `GITHUB_MODELS_URL`).
+  3. Validar el summary (máx. 120 palabras, en español, sin alucinaciones) — si falla, registrar error y notificar por email con error.
+  4. Enviar email al `emailTo` con el summary y, si aplica, incluir gráficos o adjuntos (premium).
+  5. (Opcional) Persistir estado del request en BD (ej.: table `report_requests`) para seguimiento.
+
+Configuración necesaria en el código:
+- `@EnableAsync` en la clase principal o configuración de Spring.
+- Definir un `TaskExecutor` (bean) si se requiere un pool específico y límites de concurrencia.
+- Habilitar `ApplicationEventPublisher` (inyectable automáticamente).
+
+Manejo de errores y resiliencia:
+- Capturar excepciones del LLM o del envío de email y marcar el request como `FAILED` (o enviar 503 en caso de acceso síncrono requerirlo).
+- Reintentos controlados o circuit-breaker (opcional) para llamadas a la API externa.
+
+Pruebas y debugging:
+- Para testing de emails, usar Mailtrap, MailDev o un servidor SMTP de pruebas.
+- Para probar LLM localmente, inyectar un `GitHubModelsClient` falso / bean mock que devuelva textos controlados.
+
+---
+
+## 5) Documentación del endpoint PREMIUM (si se intentó)
+
+Endpoint: `POST /sales/summary/weekly/premium`
+
+Descripción: Genera un reporte premium asíncrono que incluye:
+- Resumen en texto (texto corto)
+- Email HTML formateado
+- Gráficos embebidos (p. ej. QuickChart) y/o PDF adjunto
+
+Request body (JSON):
+
+```json
+{
+  "from": "2025-09-01",
+  "to": "2025-09-07",
+  "branch": "Miraflores",
+  "emailTo": "gerente@oreo.com",
+  "format": "PREMIUM",
+  "includeCharts": true,
+  "attachPdf": true
+}
+```
+
+Respuesta inmediata (202 Accepted):
+
+```json
+{
+  "requestId": "req_premium_01K...",
+  "status": "PROCESSING",
+  "message": "Su reporte premium está siendo generado. Incluirá gráficos y PDF adjunto.",
+  "estimatedTime": "60-90 segundos",
+  "features": ["HTML_FORMAT", "CHARTS", "PDF_ATTACHMENT"]
+}
+```
+
+Comportamiento en background (listener):
+1. Calcular agregados y generar los datos para gráficos.
+2. Generar URLs de imágenes de los gráficos (por ejemplo QuickChart) o generar imágenes locales y adjuntarlas.
+3. Construir email HTML con layout profesional e incrustar imágenes usando `<img src="...">`.
+4. Generar PDF (p. ej. con Apache PDFBox o iText) si `attachPdf=true` y adjuntarlo.
+5. Enviar correo con JavaMailSender y marcar request como `COMPLETED` o `FAILED`.
+
+Notas de implementación:
+- Para generar gráficos se recomienda QuickChart.io (fácil integración por URL). Para imágenes locales, subir a un storage accesible o adjuntar como inline attachments.
+- Para PDF se puede usar Apache PDFBox o iText; asegurar la licencia si se publica.
+
+---
+
+## 6) Checklist de entrega (para el equipo)
+
+- [ ] Reemplazar nombres y códigos UTEC en la sección de Equipo
+- [ ] Verificar que las variables de entorno estén definidas en la máquina de test
+- [ ] Asegurarse de que la colección de Postman `postman_collection.json` esté en el root del proyecto
+- [ ] Ejecutar `mvn -U clean install -DskipTests` y `mvn spring-boot:run` y validar endpoints básicos
+- [ ] Ejecutar Postman flow / Newman y confirmar todas las aserciones
+- [ ] Confirmar envío de email (usar Mailtrap o MailDev en pruebas)
+
+---
+
+Si quieres, puedo:
+- Reemplazar los placeholders del equipo si me das la lista de nombres y códigos UTEC.
+- Generar una `postman_collection.json` básica basada en los endpoints del proyecto.
+- Añadir un `postman_environment.json` con variables útiles (baseUrl, emails de prueba, etc.).
+
+Indícame qué prefieres que haga ahora.
