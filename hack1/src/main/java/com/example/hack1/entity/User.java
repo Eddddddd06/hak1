@@ -1,100 +1,58 @@
 package com.example.hack1.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
+import java.util.UUID;
 
 @Entity
-@Table(name = "users")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class User implements UserDetails {
+@Table(name = "users", indexes = {@Index(columnList = "username"), @Index(columnList = "email")})
+public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @Column(length = 36)
+    private String id = UUID.randomUUID().toString();
 
-    @Column(unique = true, nullable = false, length = 30)
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(nullable = false)
-    private String password;
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.USER;
+
     @Column(nullable = false)
-    private Role role;
+    private Instant createdAt = Instant.now();
 
-    @Column(length = 50)
-    private String branch;
+    public User() {}
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = Instant.now();
-
-        // Validación: BRANCH debe tener branch, CENTRAL no debe tenerlo
-        if (role == Role.BRANCH && (branch == null || branch.isBlank())) {
-            throw new IllegalStateException("Los usuarios BRANCH deben tener una sucursal asignada");
-        }
-        if (role == Role.CENTRAL && branch != null) {
-            throw new IllegalStateException("Los usuarios CENTRAL no deben tener sucursal asignada");
-        }
+    public User(String username, String email, String passwordHash, Role role) {
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.role = role;
     }
 
-    // Implementación de UserDetails para Spring Security
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-    }
+    // Getters y setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    @Override
-    public String getPassword() {
-        return password;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    @Override
-    public String getUsername() {
-        return username;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
-    public enum Role {
-        CENTRAL,
-        BRANCH
-    }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }
