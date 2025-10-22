@@ -7,7 +7,7 @@
   },
   "item": [
     {
-      "name": "1 - Register CENTRAL",
+      "name": "1 - Register CENTRAL (Eduardo)",
       "request": {
         "method": "POST",
         "header": [
@@ -18,7 +18,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"username\": \"oreo.central\",\n  \"email\": \"central@oreo.com\",\n  \"password\": \"Oreo1234\",\n  \"role\": \"CENTRAL\"\n}"
+          "raw": "{\n  \"username\": \"eduardo\",\n  \"email\": \"eduardo@oreo.com\",\n  \"password\": \"Oreo1234\",\n  \"role\": \"CENTRAL\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/auth/register",
@@ -49,13 +49,13 @@
       ]
     },
     {
-      "name": "2 - Login CENTRAL",
+      "name": "2 - Login CENTRAL (Eduardo)",
       "request": {
         "method": "POST",
         "header": [
           {"key": "Content-Type","value": "application/json"}
         ],
-        "body": {"mode":"raw","raw":"{\n  \"username\": \"oreo.central\",\n  \"password\": \"Oreo1234\"\n}"},
+        "body": {"mode":"raw","raw":"{\n  \"username\": \"eduardo\",\n  \"password\": \"Oreo1234\"\n}"},
         "url": {"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
       },
       "event": [
@@ -65,8 +65,7 @@
             "exec": [
               "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
               "var json = pm.response.json ? pm.response.json() : {};",
-              "if (json.token) { pm.environment.set('centralToken', json.token); pm.environment.set('centralRole', json.role || 'CENTRAL'); }
-"
+              "if (json.token) { pm.environment.set('centralToken', json.token); pm.environment.set('centralRole', json.role || 'CENTRAL'); }"
             ],
             "type": "text/javascript"
           }
@@ -74,24 +73,44 @@
       ]
     },
     {
-      "name": "3 - Register BRANCH (Miraflores)",
+      "name": "3 - Register BRANCH (Abigail - Miraflores)",
       "request": {
         "method": "POST",
         "header": [{"key":"Content-Type","value":"application/json"}],
-        "body": {"mode":"raw","raw":"{\n  \"username\": \"mira.user\",\n  \"email\": \"mira@oreo.com\",\n  \"password\": \"Oreo1234\",\n  \"role\": \"BRANCH\",\n  \"branch\": \"Miraflores\"\n}"},
+        "body": {"mode":"raw","raw":"{\n  \"username\": \"abigail\",\n  \"email\": \"abigail@oreo.com\",\n  \"password\": \"Oreo1234\",\n  \"role\": \"BRANCH\",\n  \"branch\": \"Miraflores\"\n}"},
         "url": {"raw":"{{baseUrl}}/auth/register","host":["{{baseUrl}}"],"path":["auth","register"]}
       },
       "event": [{"listen":"test","script":{"exec":["pm.test('Status code is 201', function () { pm.response.to.have.status(201); });","var json = pm.response.json ? pm.response.json() : {};","if (json.id) { pm.environment.set('branchUserId', json.id); }"],"type":"text/javascript"}}]
     },
     {
-      "name": "4 - Login BRANCH",
+      "name": "4 - Login BRANCH (Abigail)",
       "request": {
         "method": "POST",
         "header": [{"key":"Content-Type","value":"application/json"}],
-        "body": {"mode":"raw","raw":"{\n  \"username\": \"mira.user\",\n  \"password\": \"Oreo1234\"\n}"},
+        "body": {"mode":"raw","raw":"{\n  \"username\": \"abigail\",\n  \"password\": \"Oreo1234\"\n}"},
         "url": {"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
       },
       "event": [{"listen":"test","script":{"exec":["pm.test('Status code is 200', function () { pm.response.to.have.status(200); });","var json = pm.response.json ? pm.response.json() : {};","if (json.token) { pm.environment.set('branchToken', json.token); pm.environment.set('branchRole', json.role || 'BRANCH'); }"],"type":"text/javascript"}}]
+    },
+    {
+      "name": "4.1 - Register BRANCH (Zaleth - San Isidro)",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "body": {"mode":"raw","raw":"{\n  \"username\": \"zaleth\",\n  \"email\": \"zaleth@oreo.com\",\n  \"password\": \"Oreo1234\",\n  \"role\": \"BRANCH\",\n  \"branch\": \"San Isidro\"\n}"},
+        "url": {"raw":"{{baseUrl}}/auth/register","host":["{{baseUrl}}"],"path":["auth","register"]}
+      },
+      "event": [{"listen":"test","script":{"exec":["pm.test('Status code is 201', function () { pm.response.to.have.status(201); });","var json = pm.response.json ? pm.response.json() : {};","if (json.id) { pm.environment.set('zalethUserId', json.id); }"],"type":"text/javascript"}}]
+    },
+    {
+      "name": "4.2 - Login BRANCH (Zaleth)",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "body": {"mode":"raw","raw":"{\n  \"username\": \"zaleth\",\n  \"password\": \"Oreo1234\"\n}"},
+        "url": {"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
+      },
+      "event": [{"listen":"test","script":{"exec":["pm.test('Status code is 200', function () { pm.response.to.have.status(200); });","var json = pm.response.json ? pm.response.json() : {};","if (json.token) { pm.environment.set('zalethToken', json.token); }"],"type":"text/javascript"}}]
     },
     {
       "name": "5 - Crear venta 1 (Miraflores)",
@@ -223,4 +242,3 @@
     }
   ]
 }
-
