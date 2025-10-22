@@ -1,7 +1,5 @@
 package com.example.hack1.config;
 
-import com.example.hack1.security.JwtAuthenticationFilter;
-import com.example.hack1.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

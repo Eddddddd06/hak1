@@ -1,7 +1,8 @@
 package com.example.hack1.repository;
 
-import com.example.hack1.entity.User;
+import com.oreo.insight.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, String> {

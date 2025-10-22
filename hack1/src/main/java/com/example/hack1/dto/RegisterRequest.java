@@ -1,13 +1,14 @@
-package com.example.hack1.dto.auth;
+package com.example.hack1.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
-
     @NotBlank
-    @Size(min = 3, max = 50)
+    @Size(min = 3, max = 30)
+    @Pattern(regexp = "^[A-Za-z0-9._]+$")
     private String username;
 
     @NotBlank
@@ -15,24 +16,22 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank
-    @Size(min = 6, max = 100)
+    @Size(min = 8)
     private String password;
 
-    public RegisterRequest() {}
+    @NotBlank
+    private String role; // CENTRAL o BRANCH
 
-    public RegisterRequest(String username, String email, String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-    }
+    private String branch; // obligatorio si role=BRANCH
 
-    // getters y setters
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    public String getBranch() { return branch; }
+    public void setBranch(String branch) { this.branch = branch; }
 }
